@@ -371,7 +371,7 @@ footer p{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:#8aa8cc;l
     <!-- Sign-in gate — shown when not signed in -->
     <div id="signInArea" style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--blue);padding:2rem;margin-bottom:2rem;text-align:center">
       <p style="font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--text-mid);letter-spacing:.08em;margin-bottom:1.25rem">
-        &#128275; Sign in with Google to leave feedback. Your email is recorded for accountability &mdash; no spam, no sharing.
+        &#128275; Sign in with Google to leave feedback. If you are already signed in, this will happen automatically. Your email is recorded for accountability &mdash; no spam, no sharing.
       </p>
       <div id="googleSignInBtn" style="display:flex;justify-content:center"></div>
     </div>
@@ -482,7 +482,18 @@ function initGoogleSignIn() {
   google.accounts.id.initialize({
     client_id: '953348162496-8j6of2qcvsbp3p1i46ndvuqs21cm3ue8.apps.googleusercontent.com',
     callback: onGoogleSignIn,
-    auto_select: false
+    auto_select: true,        // silently sign in if already logged into Google
+    cancel_on_tap_outside: false
+  });
+  // Attempt silent sign-in first — if user is already signed in to Google,
+  // onGoogleSignIn fires automatically with no button click needed.
+  // If not signed in, the Sign In button is shown as fallback.
+  google.accounts.id.prompt((notification) => {
+    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+      // Silent sign-in not possible — show the button so user can manually sign in
+      renderGoogleButton();
+    }
+    // If sign-in was successful silently, onGoogleSignIn fires and hides the button
   });
 }
 
