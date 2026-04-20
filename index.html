@@ -364,20 +364,13 @@ footer p{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:#8aa8cc;l
   <div class="comments-inner">
     <div class="section-label" style="margin-bottom:.75rem;color:var(--blue)">Community Feedback</div>
     <div class="section-title-dark" style="margin-bottom:.5rem">Share your thoughts.</div>
-    <p style="font-size:.9rem;color:var(--text-mid);font-style:italic;font-weight:300;margin-bottom:1.5rem">Have you tried Askloud? Working on a similar problem? We would love to hear from you.</p>
+    <p style="font-size:.9rem;color:var(--text-mid);font-style:italic;font-weight:300;margin-bottom:2.5rem">Have you tried Askloud? Working on a similar problem? We would love to hear from you.</p>
 
-    <div id="userBadge" style="margin-bottom:1rem;min-height:36px"></div>
+    <!-- Google identity badge — populated silently if already signed in -->
+    <div id="userBadge" style="margin-bottom:1rem;min-height:20px"></div>
 
-    <!-- Sign-in gate — shown when not signed in -->
-    <div id="signInArea" style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--blue);padding:2rem;margin-bottom:2rem;text-align:center">
-      <p style="font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--text-mid);letter-spacing:.08em;margin-bottom:1.25rem">
-        &#128275; Sign in with Google to leave feedback. If you are already signed in, this will happen automatically. Your email is recorded for accountability &mdash; no spam, no sharing.
-      </p>
-      <div id="googleSignInBtn" style="display:flex;justify-content:center"></div>
-    </div>
-
-    <!-- Form — shown after sign-in -->
-    <div id="formArea" style="display:none">
+    <!-- Form always visible -->
+    <div id="formArea">
     <div class="comment-form">
       <div class="form-grid">
         <div class="form-row"><label>Your Name</label><input type="text" id="inputName" placeholder="e.g. Priya Sharma"></div>
@@ -404,8 +397,8 @@ footer p{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:#8aa8cc;l
         </select>
       </div>
       <button class="submit-btn" onclick="submitComment()">&#8627; Submit Feedback</button>
-      <p class="submit-note">&#128274; Your Google email is saved alongside your feedback for accountability.</p>
-    </div><!-- end formArea -->
+      <p class="submit-note">&#128272; Signed-in users are verified via Google for accountability.</p>
+    </div>
     </div>
     <div class="comments-list" id="commentsList">
       <div class="comment-card"><div class="comment-header"><div><div class="comment-author">Ravi Krishnamurthy</div><div class="comment-role">Principal SRE &middot; Flipkart</div></div><div class="comment-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div></div><div class="comment-date">April 2026</div><div class="comment-text">The zero data exfiltration design is exactly what our security team has been asking for. We manage 30+ AWS accounts and the concurrent discovery is a game changer.</div><span class="comment-tag">DevOps / SRE</span></div>
@@ -482,56 +475,27 @@ function initGoogleSignIn() {
   google.accounts.id.initialize({
     client_id: '953348162496-8j6of2qcvsbp3p1i46ndvuqs21cm3ue8.apps.googleusercontent.com',
     callback: onGoogleSignIn,
-    auto_select: true,        // silently sign in if already logged into Google
+    auto_select: true,
     cancel_on_tap_outside: false
   });
-  // Attempt silent sign-in first — if user is already signed in to Google,
-  // onGoogleSignIn fires automatically with no button click needed.
-  // If not signed in, the Sign In button is shown as fallback.
-  google.accounts.id.prompt((notification) => {
-    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-      // Silent sign-in not possible — show the button so user can manually sign in
-      renderGoogleButton();
-    }
-    // If sign-in was successful silently, onGoogleSignIn fires and hides the button
-  });
+  // Try silent sign-in — fires onGoogleSignIn automatically if already signed in.
+  // If not signed in, form is still fully visible and usable (email captured as empty).
+  google.accounts.id.prompt();
 }
 
 function onGoogleSignIn(response) {
   const payload = JSON.parse(atob(response.credential.split('.')[1]));
   googleUser = { email: payload.email, name: payload.name, picture: payload.picture };
-  updateSignInUI();
-}
-
-function updateSignInUI() {
-  const signInArea = document.getElementById('signInArea');
-  const formArea = document.getElementById('formArea');
+  // Show a small verified badge above the form — no gates, no friction
   const badge = document.getElementById('userBadge');
-  if (googleUser) {
-    signInArea.style.display = 'none';
-    formArea.style.display = 'block';
-    badge.innerHTML =
-      '<div style="display:flex;align-items:center;gap:.75rem;background:rgba(0,179,134,.08);border:1px solid rgba(0,179,134,.25);padding:.6rem 1rem">' +
-      '<img src="' + googleUser.picture + '" style="width:28px;height:28px;border-radius:50%">' +
-      '<span style="font-family:\'JetBrains Mono\',monospace;font-size:.72rem;color:var(--green)">&#10003; Signed in as ' + googleUser.email + '</span>' +
-      '<button onclick="signOut()" style="margin-left:auto;font-family:\'JetBrains Mono\',monospace;font-size:.6rem;background:none;border:1px solid var(--border);color:var(--text-mid);padding:.25rem .65rem;cursor:pointer">Sign out</button>' +
-      '</div>';
-  } else {
-    signInArea.style.display = 'block';
-    formArea.style.display = 'none';
-    badge.innerHTML = '';
-  }
+  badge.innerHTML =
+    '<div style="display:inline-flex;align-items:center;gap:.6rem;background:rgba(0,179,134,.08);border:1px solid rgba(0,179,134,.2);padding:.45rem .9rem">' +
+    '<img src="' + googleUser.picture + '" style="width:22px;height:22px;border-radius:50%">' +
+    '<span style="font-family:\'JetBrains Mono\',monospace;font-size:.66rem;color:var(--green)">&#10003; ' + googleUser.email + '</span>' +
+    '</div>';
 }
 
-function signOut() { googleUser = null; updateSignInUI(); }
-
-function renderGoogleButton() {
-  if (typeof google === 'undefined') return;
-  google.accounts.id.renderButton(
-    document.getElementById('googleSignInBtn'),
-    { theme: 'outline', size: 'large', text: 'signin_with', shape: 'rectangular', width: 280 }
-  );
-}
+function renderGoogleButton() {} // no-op — no button needed
 
 function submitComment() {
   const name = document.getElementById('inputName').value.trim();
@@ -539,7 +503,7 @@ function submitComment() {
   const comment = document.getElementById('inputComment').value.trim();
   const tag = document.getElementById('inputTag').value;
 
-  // Validate
+  // Validate required fields
   if (!name || !comment) {
     document.getElementById('inputName').style.borderColor = name ? 'var(--border)' : 'var(--red)';
     document.getElementById('inputComment').style.borderColor = comment ? 'var(--border)' : 'var(--red)';
