@@ -404,7 +404,7 @@ function escHtml(str) {
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-const SHEETS_URL = 'https://script.google.com/macros/s/%%SHEETS_URL%%/exec';
+const SHEETS_URL = '%%SHEETS_URL%%';
 
 // ── Load existing comments from Google Sheets on page load ────────────
 // JSONP callback — called by Apps Script when loaded as a script tag
