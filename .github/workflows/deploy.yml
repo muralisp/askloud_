@@ -1,0 +1,42 @@
+name: Deploy Askloud Site
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:   # allows manual trigger from GitHub UI
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Inject secrets into HTML
+        run: |
+          sed \
+            -e "s|%%SHEETS_URL%%|${{ secrets.SHEETS_URL }}|g" \
+            -e "s|%%GOOGLE_CLIENT_ID%%|${{ secrets.GOOGLE_CLIENT_ID }}|g" \
+            index.template.html > index.html
+
+      - name: Verify injection worked
+        run: |
+          if grep -q '%%SHEETS_URL%%' index.html; then
+            echo "ERROR: SHEETS_URL secret was not injected"
+            exit 1
+          fi
+          if grep -q '%%GOOGLE_CLIENT_ID%%' index.html; then
+            echo "ERROR: GOOGLE_CLIENT_ID secret was not injected"
+            exit 1
+          fi
+          echo "Secrets injected successfully"
+          echo "File size: $(wc -c < index.html) bytes"
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
+          publish_branch: gh-pages
+          include_files: index.html
