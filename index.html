@@ -404,7 +404,7 @@ function escHtml(str) {
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzvR1rsg52O2Qxsl7y-PG5mzxQYR8GucswZyL2I6IwQxQm8hJbLoXDx-hS2PqYqZr9jMA/exec';
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzpWFYvNanVU1fGZZ5BXAelPT3BuS-HHmSlo08C_sv9pdcMcA7xEvLALGgf1zI8KL4-iA/exec';
 
 // ── Load existing comments from Google Sheets on page load ────────────
 // JSONP callback — called by Apps Script when loaded as a script tag
@@ -428,7 +428,7 @@ function sheetsCallback(data) {
     const authorDiv = document.createElement('div');
     const nameDiv = document.createElement('div');
     nameDiv.className = 'comment-author';
-    nameDiv.textContent = c.name;
+    nameDiv.textContent = c.name || '';
     const roleDiv = document.createElement('div');
     roleDiv.className = 'comment-role';
     roleDiv.textContent = c.role || '';
@@ -446,7 +446,7 @@ function sheetsCallback(data) {
 
     const textDiv = document.createElement('div');
     textDiv.className = 'comment-text';
-    textDiv.textContent = c.comment;
+    textDiv.textContent = c.comment || '';
 
     card.appendChild(headerDiv);
     card.appendChild(dateDiv);
