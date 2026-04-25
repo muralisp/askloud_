@@ -420,7 +420,7 @@ function sheetsCallback(data) {
   const list = document.getElementById('commentsList');
   if (!list) return; // safety check
   data.comments.forEach(c => {
-    if (!c.name || !c.comment) return;
+    if (!c.email && !c.name) return; // skip empty rows
     const card = document.createElement('div');
     card.className = 'comment-card';
 
