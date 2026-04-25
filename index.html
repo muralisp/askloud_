@@ -404,7 +404,7 @@ function escHtml(str) {
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzpWFYvNanVU1fGZZ5BXAelPT3BuS-HHmSlo08C_sv9pdcMcA7xEvLALGgf1zI8KL4-iA/exec';
+const SHEETS_URL = 'https://script.google.com/macros/s/https://script.google.com/macros/s/AKfycbzpWFYvNanVU1fGZZ5BXAelPT3BuS-HHmSlo08C_sv9pdcMcA7xEvLALGgf1zI8KL4-iA/exec/exec';
 
 // ── Load existing comments from Google Sheets on page load ────────────
 // JSONP callback — called by Apps Script when loaded as a script tag
@@ -418,6 +418,7 @@ function sheetsCallback(data) {
   document.querySelectorAll('.comment-card.seed').forEach(c => c.remove());
 
   const list = document.getElementById('commentsList');
+  if (!list) return; // safety check
   data.comments.forEach(c => {
     if (!c.name || !c.comment) return;
     const card = document.createElement('div');
@@ -428,15 +429,17 @@ function sheetsCallback(data) {
     const authorDiv = document.createElement('div');
     const nameDiv = document.createElement('div');
     nameDiv.className = 'comment-author';
-    nameDiv.textContent = c.name || '';
+    // Sheet columns: Timestamp|Name|Role|Rating|Tag|Comment
+    // doGet maps them as: email=Name, name=Role, role=Rating, rating=Tag, tag=Comment
+    nameDiv.textContent = c.email || c.name || '';
     const roleDiv = document.createElement('div');
     roleDiv.className = 'comment-role';
-    roleDiv.textContent = c.role || '';
+    roleDiv.textContent = c.name || c.role || '';
     authorDiv.appendChild(nameDiv);
     authorDiv.appendChild(roleDiv);
     const starsDiv = document.createElement('div');
     starsDiv.className = 'comment-stars';
-    starsDiv.textContent = ratingToStars(c.rating);
+    starsDiv.textContent = ratingToStars(c.role || c.rating);
     headerDiv.appendChild(authorDiv);
     headerDiv.appendChild(starsDiv);
 
@@ -446,16 +449,16 @@ function sheetsCallback(data) {
 
     const textDiv = document.createElement('div');
     textDiv.className = 'comment-text';
-    textDiv.textContent = c.comment || '';
+    textDiv.textContent = c.tag || c.comment || '';
 
     card.appendChild(headerDiv);
     card.appendChild(dateDiv);
     card.appendChild(textDiv);
 
-    if (c.tag) {
+    if (c.rating || c.tag) {
       const tagEl = document.createElement('span');
       tagEl.className = 'comment-tag';
-      tagEl.textContent = c.tag;
+      tagEl.textContent = c.rating || c.tag;
       card.appendChild(tagEl);
     }
     list.appendChild(card);
@@ -488,13 +491,18 @@ function ratingToStars(rating) {
   return '★'.repeat(Math.min(num, 5)) + '☆'.repeat(Math.max(0, 5 - num));
 }
 
-window.addEventListener('DOMContentLoaded', loadComments);
+// Load comments when DOM is ready — retry if commentsList not in DOM yet
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', loadComments);
+} else {
+  loadComments(); // DOM already ready
+}
 let googleUser = null;
 
 function initGoogleSignIn() {
   if (typeof google === 'undefined') return;
   google.accounts.id.initialize({
-    client_id: '953348162496-8j6of2qcvsbp3p1i46ndvuqs21cm3ue8.apps.googleusercontent.com',
+    client_id: 'YOUR_GOOGLE_CLIENT_ID',
     callback: onGoogleSignIn,
     auto_select: true,
     cancel_on_tap_outside: false
